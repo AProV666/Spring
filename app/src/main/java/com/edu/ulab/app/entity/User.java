@@ -1,10 +1,10 @@
-package com.edu.ulab.app.dto;
+package com.edu.ulab.app.entity;
 
 import lombok.Data;
 
 @Data
-public class UserDto {
-    private Long id;
+public class User {
+    private String id;
     private String fullName;
     private String title;
     private int age;

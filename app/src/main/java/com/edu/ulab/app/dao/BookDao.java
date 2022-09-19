@@ -1,11 +1,10 @@
-package com.edu.ulab.app.service;
-
+package com.edu.ulab.app.dao;
 
 import com.edu.ulab.app.dao.dto.BookDto;
 
 import java.util.List;
 
-public interface BookService {
+public interface BookDao {
     String create(BookDto bookDto);
 
     Boolean update(BookDto bookDto);
