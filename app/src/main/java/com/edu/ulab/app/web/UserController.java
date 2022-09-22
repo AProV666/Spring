@@ -1,8 +1,10 @@
 package com.edu.ulab.app.web;
 
+import com.edu.ulab.app.exception.NoUserFoundException;
 import com.edu.ulab.app.facade.UserDataFacade;
 import com.edu.ulab.app.web.constant.WebConstant;
 import com.edu.ulab.app.web.request.UserBookRequest;
+import com.edu.ulab.app.web.response.UserBookDeleteWebResponse;
 import com.edu.ulab.app.web.response.UserBookResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -35,29 +37,64 @@ public class UserController {
                             content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE,
                                     schema = @Schema(implementation = UserBookResponse.class)))})
     public UserBookResponse createUserWithBooks(@RequestBody UserBookRequest request,
-                                                @RequestHeader(RQID) @Pattern(regexp = REQUEST_ID_PATTERN) final String requestId) {
+                                   @RequestHeader(RQID) @Pattern(regexp = REQUEST_ID_PATTERN) final String requestId) {
         UserBookResponse response = userDataFacade.createUserWithBooks(request);
         log.info("Response with created user and his books: {}", response);
         return response;
     }
 
     @PutMapping(value = "/update")
+    @Operation(summary = "Update user book row.",
+            responses = {
+                    @ApiResponse(description = "User book",
+                            content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE,
+                                    schema = @Schema(implementation = UserBookResponse.class)))})
     public UserBookResponse updateUserWithBooks(@RequestBody UserBookRequest request) {
-        UserBookResponse response = userDataFacade.updateUserWithBooks(request);
+        UserBookResponse response;
+        try {
+            response = userDataFacade.updateUserWithBooks(request);
+        } catch (NoUserFoundException e) {
+            response = new UserBookResponse(null, null);
+            response.setErrorMessage("No such user!");
+        }
         log.info("Response with updated user and his books: {}", response);
         return response;
     }
 
     @GetMapping(value = "/get/{userId}")
-    public UserBookResponse updateUserWithBooks(@PathVariable Long userId) {
-        UserBookResponse response = userDataFacade.getUserWithBooks(userId);
+    @Operation(summary = "Get user book row.",
+            responses = {
+                    @ApiResponse(description = "User book",
+                            content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE,
+                                    schema = @Schema(implementation = UserBookResponse.class)))})
+    public UserBookResponse getUserWithBooks(@PathVariable String userId) {
+        UserBookResponse response;
+        try {
+            response = userDataFacade.getUserWithBooks(userId);
+        } catch (NoUserFoundException e) {
+            response = new UserBookResponse(null, null);
+            response.setErrorMessage("No such user!");
+        }
         log.info("Response with user and his books: {}", response);
         return response;
     }
 
     @DeleteMapping(value = "/delete/{userId}")
-    public void deleteUserWithBooks(@PathVariable Long userId) {
-        log.info("Delete user and his books:  userId {}", userId);
-        userDataFacade.deleteUserWithBooks(userId);
+    @Operation(summary = "Delete user book row.",
+            responses = {
+                    @ApiResponse(description = "Message",
+                            content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE,
+                                    schema = @Schema(implementation = UserBookDeleteWebResponse.class)))})
+    public UserBookDeleteWebResponse deleteUserWithBooks(@PathVariable String userId) {
+        log.info("Delete user and his books: userId {}", userId);
+        Boolean success = userDataFacade.deleteUserWithBooks(userId);
+        UserBookDeleteWebResponse response;
+        if (success) {
+            response = UserBookDeleteWebResponse.builder().message("User deleted").build();
+        } else {
+            response = new UserBookDeleteWebResponse(null);
+            response.setErrorMessage("Deletion error");
+        }
+        return response;
     }
 }

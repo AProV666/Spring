@@ -1,8 +1,7 @@
 package com.edu.ulab.app.facade;
 
-import com.edu.ulab.app.dto.BookDto;
-import com.edu.ulab.app.dto.UserDto;
-import com.edu.ulab.app.exception.NotFoundException;
+import com.edu.ulab.app.dao.dto.UserDto;
+import com.edu.ulab.app.exception.NoUserFoundException;
 import com.edu.ulab.app.mapper.BookMapper;
 import com.edu.ulab.app.mapper.UserMapper;
 import com.edu.ulab.app.service.BookService;
@@ -23,10 +22,8 @@ public class UserDataFacade {
     private final UserMapper userMapper;
     private final BookMapper bookMapper;
 
-    public UserDataFacade(UserService userService,
-                          BookService bookService,
-                          UserMapper userMapper,
-                          BookMapper bookMapper) {
+    public UserDataFacade(UserService userService, BookService bookService,
+                          UserMapper userMapper, BookMapper bookMapper) {
         this.userService = userService;
         this.bookService = bookService;
         this.userMapper = userMapper;
@@ -38,35 +35,62 @@ public class UserDataFacade {
         UserDto userDto = userMapper.userRequestToUserDto(userBookRequest.getUserRequest());
         log.info("Mapped user request: {}", userDto);
 
-        UserDto createdUser = userService.createUser(userDto);
-        log.info("Created user: {}", createdUser);
+        String id = userService.create(userDto);
+        log.info("Created user id: {}", id);
 
-        List<Long> bookIdList = userBookRequest.getBookRequests()
+        List<String> bookListId = userBookRequest.getBookRequests()
                 .stream()
                 .filter(Objects::nonNull)
                 .map(bookMapper::bookRequestToBookDto)
-                .peek(bookDto -> bookDto.setUserId(createdUser.getId()))
-                .peek(mappedBookDto -> log.info("mapped book: {}", mappedBookDto))
-                .map(bookService::createBook)
-                .peek(createdBook -> log.info("Created book: {}", createdBook))
-                .map(BookDto::getId)
+                .peek(bookDto -> bookDto.setUserId(id))
+                .map(bookService::create)
                 .toList();
-        log.info("Collected book ids: {}", bookIdList);
 
         return UserBookResponse.builder()
-                .userId(createdUser.getId())
-                .booksIdList(bookIdList)
+                .userId(id)
+                .booksIdList(bookListId)
                 .build();
     }
 
     public UserBookResponse updateUserWithBooks(UserBookRequest userBookRequest) {
-        return null;
+        log.info("Got user book update request: {}", userBookRequest);
+        UserDto userDto = userMapper.userRequestToUserDto(userBookRequest.getUserRequest());
+        log.info("Mapped user request: {}", userDto);
+        if (userService.get(userDto.getId()) == null) {
+            throw new NoUserFoundException("No user with id found: " + userDto.getId());
+        }
+        userService.update(userDto);
+        List<String> bookIdList = userBookRequest.getBookRequests()
+                .stream()
+                .filter(Objects::nonNull)
+                .map(bookMapper::bookRequestToBookDto)
+                .map(bookDto -> {
+                    if (bookService.get(bookDto.getId()) != null) {
+                        bookService.update(bookDto);
+                        return bookDto.getId();
+                    } else {
+                        bookDto.setUserId(userDto.getId());
+                        return bookService.create(bookDto);
+                    }
+                }).toList();
+        return UserBookResponse.builder().userId(userDto.getId()).booksIdList(bookIdList).build();
     }
 
-    public UserBookResponse getUserWithBooks(Long userId) {
-        return null;
+    public UserBookResponse getUserWithBooks(String userId) {
+        log.info("Got user book get request by id: {}", userId);
+        UserDto userDto = userService.get(userId);
+        if (userDto == null) {
+            throw new NoUserFoundException("No user with id found: " + userId);
+        }
+        log.info("Found user: {}", userDto);
+        List<String> booksIdList = bookService.getListIdByUserId(userId);
+        log.info("User books: {}", booksIdList);
+        return UserBookResponse.builder().userId(userId).booksIdList(booksIdList).build();
     }
 
-    public void deleteUserWithBooks(Long userId) {
+    public Boolean deleteUserWithBooks(String userId) {
+        Boolean bookSuccess = bookService.deleteBooksByUserId(userId);
+        Boolean userSuccess = userService.delete(userId);
+        return bookSuccess && userSuccess;
     }
 }
