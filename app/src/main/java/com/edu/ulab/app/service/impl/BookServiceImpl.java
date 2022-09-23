@@ -1,31 +1,47 @@
 package com.edu.ulab.app.service.impl;
 
-import com.edu.ulab.app.dto.BookDto;
+import com.edu.ulab.app.dao.BookDao;
+import com.edu.ulab.app.dao.dto.BookDto;
 import com.edu.ulab.app.service.BookService;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
-@Slf4j
+import java.util.List;
+
 @Service
 public class BookServiceImpl implements BookService {
-    @Override
-    public BookDto createBook(BookDto bookDto) {
-        bookDto.setId(22L);
-        return bookDto;
+    private final BookDao dao;
+
+    public BookServiceImpl(BookDao dao) {
+        this.dao = dao;
     }
 
     @Override
-    public BookDto updateBook(BookDto bookDto) {
-        return null;
+    public String create(BookDto bookDto) {
+        return dao.create(bookDto);
     }
 
     @Override
-    public BookDto getBookById(Long id) {
-        return null;
+    public Boolean update(BookDto bookDto) {
+        return dao.update(bookDto);
     }
 
     @Override
-    public void deleteBookById(Long id) {
+    public BookDto get(String id) {
+        return dao.get(id);
+    }
 
+    @Override
+    public Boolean delete(String id) {
+        return dao.delete(id);
+    }
+
+    @Override
+    public List<String> getListIdByUserId(String userId) {
+        return dao.getListIdByUserId(userId);
+    }
+
+    @Override
+    public Boolean deleteBooksByUserId(String userId) {
+        return dao.deleteBooksByUserId(userId);
     }
 }

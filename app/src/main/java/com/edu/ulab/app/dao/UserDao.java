@@ -1,8 +1,8 @@
-package com.edu.ulab.app.service;
+package com.edu.ulab.app.dao;
 
 import com.edu.ulab.app.dao.dto.UserDto;
 
-public interface UserService {
+public interface UserDao {
     String create(UserDto userDto);
 
     Boolean update(UserDto userDto);
