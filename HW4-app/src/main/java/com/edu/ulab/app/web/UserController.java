@@ -67,6 +67,7 @@ public class UserController {
             response = userDataFacade.getUserWithBooks(userId);
         } catch (NotFoundException e) {
             response = new UserBookResponse(null, null);
+            response.setErrorMessage("User not found!");
         }
         log.info("Response with user and his books: {}", response);
         return response;
