@@ -2,6 +2,7 @@ package com.edu.ulab.app.service.impl;
 
 import com.edu.ulab.app.dto.UserDto;
 import com.edu.ulab.app.exception.NotFoundException;
+import com.edu.ulab.app.mapper.rowmap.UserRowMapper;
 import com.edu.ulab.app.service.UserService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataAccessException;
@@ -61,17 +62,7 @@ public class UserServiceImplTemplate implements UserService {
         final String SELECT_SQL = "SELECT * FROM PERSON WHERE ID = ?";
         UserDto userDto = null;
         try {
-            userDto = jdbcTemplate.queryForObject(SELECT_SQL, new RowMapper<UserDto>() {
-                @Override
-                public UserDto mapRow(ResultSet rs, int rowNum) throws SQLException {
-                    UserDto user = new UserDto();
-                    user.setId(rs.getLong("ID"));
-                    user.setFullName(rs.getString("FULL_NAME"));
-                    user.setTitle(rs.getString("TITLE"));
-                    user.setAge(rs.getInt("AGE"));
-                    return user;
-                }
-            }, id);
+            userDto = jdbcTemplate.queryForObject(SELECT_SQL, new UserRowMapper(), id);
         } catch (DataAccessException e) {
             throw new NotFoundException("User not found!");
         }

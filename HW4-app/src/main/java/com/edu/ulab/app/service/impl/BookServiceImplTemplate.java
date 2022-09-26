@@ -3,6 +3,7 @@ package com.edu.ulab.app.service.impl;
 import com.edu.ulab.app.dto.BookDto;
 import com.edu.ulab.app.dto.UserDto;
 import com.edu.ulab.app.exception.NotFoundException;
+import com.edu.ulab.app.mapper.rowmap.BookRowMapper;
 import com.edu.ulab.app.service.BookService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -68,18 +69,7 @@ public class BookServiceImplTemplate implements BookService {
     public BookDto getBookById(Long id) {
         log.info("Get book with id: {}", id);
         final String SELECT_SQL = "SELECT * FROM BOOK WHERE ID = ?";
-        BookDto bookDto = jdbcTemplate.queryForObject(SELECT_SQL, new RowMapper<BookDto>() {
-            @Override
-            public BookDto mapRow(ResultSet rs, int rowNum) throws SQLException {
-                BookDto book = new BookDto();
-                book.setId(rs.getLong("ID"));
-                book.setUserId(rs.getLong("USER_ID"));
-                book.setTitle(rs.getString("TITLE"));
-                book.setAuthor(rs.getString("AUTHOR"));
-                book.setPageCount(rs.getLong("PAGE_COUNT"));
-                return book;
-            }
-        }, id);
+        BookDto bookDto = jdbcTemplate.queryForObject(SELECT_SQL, new BookRowMapper(), id);
         log.info("Book: {}", bookDto);
         return bookDto;
     }
@@ -101,18 +91,7 @@ public class BookServiceImplTemplate implements BookService {
     public List<BookDto> getBookListByUserId(Long id) {
         log.info("Get book by user id: {}", id);
         final String SELECT_USER_ID_SQL = "SELECT * FROM BOOK WHERE USER_ID = ?";
-        List<BookDto> bookList = jdbcTemplate.query(SELECT_USER_ID_SQL, new RowMapper<BookDto>() {
-            @Override
-            public BookDto mapRow(ResultSet rs, int rowNum) throws SQLException {
-                BookDto book = new BookDto();
-                book.setId(rs.getLong("ID"));
-                book.setUserId(rs.getLong("USER_ID"));
-                book.setTitle(rs.getString("TITLE"));
-                book.setAuthor(rs.getString("AUTHOR"));
-                book.setPageCount(rs.getLong("PAGE_COUNT"));
-                return book;
-            }
-        }, id);
+        List<BookDto> bookList = jdbcTemplate.query(SELECT_USER_ID_SQL, new BookRowMapper(), id);
         log.info("Book list: {}", bookList);
         return bookList;
     }
