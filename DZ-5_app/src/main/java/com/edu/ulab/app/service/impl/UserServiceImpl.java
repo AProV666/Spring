@@ -2,6 +2,7 @@ package com.edu.ulab.app.service.impl;
 
 import com.edu.ulab.app.dto.UserDto;
 import com.edu.ulab.app.entity.Person;
+import com.edu.ulab.app.exception.NotFoundException;
 import com.edu.ulab.app.mapper.UserMapper;
 import com.edu.ulab.app.repository.UserRepository;
 import com.edu.ulab.app.service.UserService;
@@ -32,18 +33,31 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public UserDto updateUser(UserDto userDto) {
-        // реализовать недстающие методы
-        return null;
+        Person user = userMapper.userDtoToPerson(userDto);
+        log.info("Update user: {}", user);
+        Person newPerson = userRepository.save(user);
+        log.info("New user: {}", newPerson);
+        return userMapper.personToUserDto(newPerson);
     }
 
     @Override
     public UserDto getUserById(Long id) {
-        // реализовать недстающие методы
-        return null;
+        log.info("Get user with id: {}", id);
+        Person user = userRepository.findById(id).orElseThrow(() -> new NotFoundException("User not found!"));
+        log.info("User: {}", user);
+        return userMapper.personToUserDto(user);
     }
 
     @Override
-    public void deleteUserById(Long id) {
-        // реализовать недстающие методы
+    public Boolean deleteUserById(Long id) {
+        log.info("Delete user with id: {}", id);
+        boolean hasUser = userRepository.findById(id).isEmpty();
+        if (hasUser) {
+            log.info("User not found: {}", id);
+            return false;
+        }
+        userRepository.deleteById(id);
+        log.info("Deleted user with id: {}", id);
+        return true;
     }
 }

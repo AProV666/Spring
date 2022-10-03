@@ -1,6 +1,5 @@
- swagger-api:
+swagger-api:
   version: "1.0"
-
 spring:
   jpa:
     hibernate:
@@ -12,10 +11,11 @@ spring:
         generate_statistics: true
         format_sql: true
         dialect: org.hibernate.dialect.PostgreSQL81Dialect
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
   datasource:
-    url: jdbc:postgresql://${PSQL_DATASOURCE_URL:localhost:5432/mpl_ulab_db}
-    username: ${PSQL_DATASOURCE_USERNAME:test}
-    password: ${PSQL_DATASOURCE_PASSWORD:test}
+    url: jdbc:postgresql://localhost:5432/postgres
+    username: postgres
+    password: testtest
   mvc:
     pathmatch:
       matching-strategy: ant_path_matcher

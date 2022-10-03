@@ -1,11 +1,11 @@
 package com.edu.ulab.app.entity;
 
-
-import lombok.*;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 import javax.persistence.*;
 import java.util.Set;
-
 
 @Getter
 @Setter
@@ -16,7 +16,7 @@ public class Person {
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "sequence")
     @SequenceGenerator(name = "sequence", sequenceName = "sequence", allocationSize = 100)
-    private Integer id;
+    private Long id;
 
     @Column(nullable = false)
     private String fullName;
@@ -26,9 +26,6 @@ public class Person {
 
     @Column(nullable = false)
     private int age;
-
-//    @Column(nullable = false)
-//    private int count;
 
     @OneToMany(mappedBy = "person", cascade = {
             CascadeType.MERGE,
