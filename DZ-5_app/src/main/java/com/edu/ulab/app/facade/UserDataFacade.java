@@ -5,12 +5,16 @@ import com.edu.ulab.app.dto.UserDto;
 import com.edu.ulab.app.mapper.BookMapper;
 import com.edu.ulab.app.mapper.UserMapper;
 
+import com.edu.ulab.app.service.impl.BookServiceImpl;
 import com.edu.ulab.app.service.impl.BookServiceImplTemplate;
+import com.edu.ulab.app.service.impl.UserServiceImpl;
 import com.edu.ulab.app.service.impl.UserServiceImplTemplate;
 import com.edu.ulab.app.web.request.UserBookRequest;
 import com.edu.ulab.app.web.response.UserBookResponse;
+import com.edu.ulab.app.web.response.UserDeleteResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Objects;
@@ -33,6 +37,7 @@ public class UserDataFacade {
         this.bookMapper = bookMapper;
     }
 
+    @Transactional
     public UserBookResponse createUserWithBooks(UserBookRequest userBookRequest) {
         log.info("Got user book create request: {}", userBookRequest);
         UserDto userDto = userMapper.userRequestToUserDto(userBookRequest.getUserRequest());
@@ -59,14 +64,61 @@ public class UserDataFacade {
                 .build();
     }
 
-    public UserBookResponse updateUserWithBooks(UserBookRequest userBookRequest) {
-        return null;
+    @Transactional
+    public UserBookResponse updateUserWithBooks(UserBookRequest userBookRequest, Long id) {
+        UserDto userDto = userMapper.userRequestToUserDto(userBookRequest.getUserRequest());
+        userDto.setId(id);
+        log.info("Mapped user request: {}", userDto);
+
+        UserDto newUser = userService.updateUser(userDto);
+        log.info("New user: {}", userDto);
+
+        List<BookDto> newBookList = userBookRequest.getBookRequests()
+                .stream()
+                .filter(Objects::nonNull)
+                .map(bookMapper::bookRequestToBookDto)
+                .peek(bookDto -> bookDto.setUserId(newUser.getId()))
+                .map(bookService::createBook)
+                .toList();
+
+        List<Long> bookIdList = bookService.getBookListByUserId(newUser.getId())
+                .stream()
+                .map(BookDto::getId)
+                .toList();
+        log.info("Collected books id: {}", bookIdList);
+
+        return UserBookResponse.builder().userId(id).booksIdList(bookIdList).build();
     }
 
+    @Transactional
     public UserBookResponse getUserWithBooks(Long userId) {
-        return null;
+        UserDto userDto = userService.getUserById(userId);
+        log.info("Got user: {}", userDto);
+        List<Long> bookIdList = bookService.getBookListByUserId(userId)
+                .stream()
+                .filter(Objects::nonNull)
+                .map(BookDto::getId)
+                .toList();
+        log.info("Collected book ids: {}", bookIdList);
+
+        return UserBookResponse.builder().userId(userDto.getId()).booksIdList(bookIdList).build();
     }
 
-    public void deleteUserWithBooks(Long userId) {
+    @Transactional
+    public UserDeleteResponse deleteUserWithBooks(Long userId) {
+        log.info("Delete user and his books: user id {}", userId);
+        List<Long> bookIdList = bookService.getBookListByUserId(userId)
+                .stream()
+                .filter(Objects::nonNull)
+                .map(BookDto::getId)
+                .peek(bookService::deleteBookById)
+                .toList();
+        log.info("Deleted books with user id: {}", userId);
+        Boolean hasDeleted = userService.deleteUserById(userId);
+        if (!hasDeleted) {
+            return UserDeleteResponse.builder().errorMessage("Deletion error. User not found.").build();
+        }
+        log.info("Deleted user with id: {}", userId);
+        return UserDeleteResponse.builder().message("User deleted!").build();
     }
 }
